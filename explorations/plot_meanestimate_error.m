@@ -10,7 +10,7 @@ normalizedDotProduct = @(est,p) dot(est,p)/(norm(est)*norm(p));
 angle = @(est,p) acos(dot(est,p)/(norm(est)*norm(p)))*180/pi;
 
 m = 20; % num samples per goal vector
-k = 1000; % num goal vectors used to calculate mean/stdev
+k = 200; % num goal vectors used to calculate mean/stdev
 C = uniformNonnegativeBinary;
 D = @uniformAllNonzeroAndNotAllOneSignHypercube;
 E = dotProduct;
