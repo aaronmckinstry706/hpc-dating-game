@@ -4,9 +4,8 @@ import numpy as np
 import socket
 from dating.base import move_print
 
-
-ATTRIBUTES = 10
 port = int(sys.argv[1])
+ATTRIBUTES = int(sys.argv[2])
 
 connect_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 connect_sock.bind(('localhost', port))

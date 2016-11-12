@@ -23,9 +23,11 @@ ax = subplot(1,1,1);
 hold on;
 plotMeanStdevErrorVsN(ax,m,k,C,D,E,@meanEstimator);
 plotMeanStdevErrorVsN(ax,m,k,C,D,E,@cornerMeanEstimator);
-plotMeanStdevErrorVsN(ax,m,k,C,D,E,@cornerMeanNormalizedEstimator);
+plotMeanStdevErrorVsN(ax,m,k,C,D,E,createPerceptronAlgorithm(0.005,10,true));
 hold off;
-legend(ax,'mean-estimator','corner-mean-estimator','corner-mean-norm2-estimator');
+legend(ax,'mean-estimator',...
+    'corner-mean-estimator',...
+    'perceptron-algorithm-step0.005-iter10-corner');
 title(ax,'Mean dot product for mean-estimate of goal vector, vs. n');
 xlabel(ax,'Dimension n');
 ylabel(ax,'Mean dot(goal,estimate) for estimate of goal vector');
