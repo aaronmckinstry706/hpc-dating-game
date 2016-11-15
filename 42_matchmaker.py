@@ -52,7 +52,7 @@ subsetScores = [0 for i in range(0,numSubsets)]
 def getSubsetVector(k):
     global shuffledIndexes
     v = [0 for L in range(0,num_attr)]
-    offset = sum(subsetSizes[:i])
+    offset = sum(subsetSizes[:k])
     print(k)
     for j in range(offset, offset+subsetSizes[k]):
         v[shuffledIndexes[j]] = 1
