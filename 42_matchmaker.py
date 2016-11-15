@@ -41,7 +41,8 @@ for i in range(20):
     print('Score = %s' % data[:8])
     assert data[-1] == '\n'
 
-shuffledIndexes = [i for i in range(0,num_attr)]# random.shuffle([i for i in range(0,num_attr))])
+shuffledIndexes = [i for i in range(0,num_attr)]
+random.shuffle(shuffledIndexes)
 numSubsets = 18
 subsetSize = num_attr/numSubsets
 subsetSizes = [subsetSize+1]*(num_attr%numSubsets) + [subsetSize]*(numSubsets - (num_attr%numSubsets))
@@ -49,6 +50,7 @@ subsetSizes = [subsetSize+1]*(num_attr%numSubsets) + [subsetSize]*(numSubsets - 
 subsetScores = [0 for i in range(0,numSubsets)]
 
 def getSubsetVector(k):
+    global shuffledIndexes
     v = [0 for L in range(0,num_attr)]
     offset = sum(subsetSizes[:i])
     print(k)
