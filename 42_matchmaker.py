@@ -6,70 +6,6 @@ import random
 import unittest
 from architecture.dating.utils import floats_to_msg4
 
-# ----------------- GLOBAL VARIABLES ---------------------
-
-num_attr = 0
-binary_vectors = []
-dot_products = []
-
-# ----------------- MATCHMAKER LOGIC ---------------------
-
-def randomBinaryVector(distribution):
-    return [int(random.random() < distribution[i]) for i in range(0,len(distribution))]
-
-def calculateDistribution(binaryVectors, dotProducts):
-    # invert any with negative dot products
-    # calculate sum of dot products
-    total = 0
-    for i in range(0,len(dotProducts)):
-        if dotProducts[i] < 0:
-            binaryVectors[i] = [1-binaryVectors[i][j] for j in range(0,num_attr)]
-            dotProducts[i] = -dotProducts[i]
-        total = total + dotProducts[i]
-    
-    # calculate normalized probability of each element being a 1
-    distribution = [0 for j in range(0,num_attr)]
-    for i in range(0,len(binaryVectors)):
-        distribution = [distribution[j]+binaryVectors[i][j]*dotProducts[i]/total for j in range(0,num_attr)]
-    return distribution
-
-# ------------------ UNIT TESTS ---------------------------
-
-doUnitTests = False
-
-class TestMatchmakerFunctions(unittest.TestCase):
-    def setUp(self):
-        global num_attr
-        num_attr = 4
-    
-    def tearDown(self):
-        global num_attr
-        num_attr = 0
-    
-    def test_calculateDistribution(self):
-        global num_attr
-        binaryVectors = [[0,0,1,1],
-                         [0,1,0,1],
-                         [1,0,1,1]]
-        dotProducts = [0.4,-.2,.3];
-        result = tuple(calculateDistribution(binaryVectors,dotProducts))
-        expectedResult = (0.5/0.9, 0.0, 1.0, 0.7/0.9)
-        for i in range(0,num_attr):
-            self.assertAlmostEqual(expectedResult[i],result[i])
-
-if doUnitTests:
-    testSuite = unittest.TestLoader().loadTestsFromTestCase(TestMatchmakerFunctions)
-    unittest.TextTestRunner(verbosity=2).run(testSuite)
-
-# ----------------- UTILITY FUNCTIONS ---------------------
-
-def processLine(data):
-    score = float(data.split(":")[0])
-    vector = [float(el) for el in data.split(":")[1].split(",")]
-    return (vector,score)
-
-# ----------------- MAIN LOOP ---------------------
-
 PORT = int(sys.argv[1])
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -79,6 +15,18 @@ num_string = sock.recv(4)
 assert num_string.endswith('\n')
 
 num_attr = int(num_string[:-1])
+
+binary_vectors = []
+dot_products = []
+
+# ----------------- UTILITY FUNCTIONS ---------------------
+
+def processLine(data):
+    score = float(data.split(":")[0])
+    vector = [float(el) for el in data.split(":")[1].split(",")]
+    return (vector,score)
+
+# -------------------- MATCHMAKER LOGIC ------------------------
 
 for i in range(20):
     # score digits + binary labels + commas + exclamation
@@ -93,15 +41,47 @@ for i in range(20):
     print('Score = %s' % data[:8])
     assert data[-1] == '\n'
 
+shuffledIndexes = [i for i in range(0,num_attr)]# random.shuffle([i for i in range(0,num_attr))])
+numSubsets = 18
+subsetSize = num_attr/numSubsets
+subsetSizes = [subsetSize+1]*(num_attr%numSubsets) + [subsetSize]*(numSubsets - (num_attr%numSubsets))
+
+subsetScores = [0 for i in range(0,numSubsets)]
+
+def getSubsetVector(k):
+    v = [0 for L in range(0,num_attr)]
+    offset = sum(subsetSizes[:i])
+    print(k)
+    for j in range(offset, offset+subsetSizes[k]):
+        v[shuffledIndexes[j]] = 1
+    return v
+
 for i in range(20):
-    distribution = calculateDistribution(binary_vectors,dot_products)
-    candidate = randomBinaryVector(distribution)
+    if i < numSubsets:
+        candidate = getSubsetVector(i)
+    elif i > numSubsets:
+        candidateIndex = max([i for i in range(0,20)], lambda i: dot_products[i])
+        candidate = binary_vectors[i]
+    else:
+        subsetOn = [subsetScores[j] > 0 for j in range(0,numSubsets)]
+        v = []
+        for i in range(0,numSubsets):
+            if subsetOn[i]:
+                v.append(getSubsetVector(i))
+        v = [sum([v[k][j] for k in range(0,len(v))]) for j in range(0,num_attr)]
+        print(v)
+        candidate = v
+    
+    binary_vectors.append(candidate)
     
     a = np.array(candidate)
     sock.sendall(floats_to_msg4(a))
     data = sock.recv(8)
-    assert data[-1] == '\n'
     score = float(data[:-1])
     print('i = %d score = %f' % (i, score))
+    
+    dot_products.append(score)
+    if i < numSubsets:
+        subsetScores[i] = score
 
 sock.close()
